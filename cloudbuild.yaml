@@ -1,10 +1,28 @@
-# build docker image
+# Create the new instance template
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/python-repo/python-image', '.' ]
-# push docker image
-images:
-- 'us-central1-docker.pkg.dev/$PROJECT_ID/python-repo/python-image'
-## [END cloudbuild_quickstart_build]
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: create-instance-template
+  args:
+    - compute
+    - instance-templates
+    - create-with-container
+    - cloud-build-instance-template-$_ENV-$SHORT_SHA
+    - --custom-cpu=1
+    - --custom-memory=2GB
+    - --boot-disk-size=20GB
+    - --region=us-central1
+    - --subnet=mig-subnet
+    - --tags=allow-hc-and-proxy,allow-ssh
+    - --container-image
+    - us-central1-docker.pkg.dev/searce-playground-v1/python-repo/python-image:latest
+
+ # # create the managed instance group
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args: ['-c','gcloud compute instance-groups managed create cloudbuild-mig --template cloud-build-instance-template-$_ENV-$SHORT_SHA  --size 1 --region us-central1']  
+  
+
+
 options:
  logging: CLOUD_LOGGING_ONLY
+
