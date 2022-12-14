@@ -6,7 +6,7 @@ steps:
     - compute
     - instance-templates
     - create-with-container
-    - cloud-build-instance-template-$_ENV-$SHORT_SHA
+    - cloud-build-instance-template-v1-$_ENV-$SHORT_SHA
     - --custom-cpu=1
     - --custom-memory=2GB
     - --boot-disk-size=20GB
@@ -15,15 +15,13 @@ steps:
     - --tags=allow-hc-and-proxy,allow-ssh
     - --container-image
     - us-central1-docker.pkg.dev/searce-playground-v1/python-repo/python-image:latest
+    
+ # Update the managed instance group
 
- # # create the managed instance group
+
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
-  args: ['-c','gcloud compute instance-groups managed create cloudbuild-mig --template cloud-build-instance-template-$_ENV-$SHORT_SHA  --size 1 --region us-central1']  
+  args: ['-c','gcloud compute instance-groups managed rolling-action start-update cloudbuild-mig --version=template=cloud-build-instance-template-v1-$_ENV-$SHORT_SHA --region=us-central1 --max-unavailable=0'] 
   
-
-
 options:
  logging: CLOUD_LOGGING_ONLY
-
-
